@@ -3,8 +3,22 @@
 IndiaVol forecasts how volatile NSE indices and F&O stocks will be over the next **1, 5 and 10 trading days**. It
 does **not** predict price direction.
 
-Status: **training / evaluation in progress.** The pre-registered holdout has not been opened yet. Results, and
-whether the fine-tuned model is published on Hugging Face, are decided by the rule below, not afterwards.
+Status: **done.** The holdout was opened once (2026-10-24) and the fine-tuned model **passed** the pre-registered
+publish rule. Model: **[chelvaser/indiavol-chronos2](https://huggingface.co/chelvaser/indiavol-chronos2)**.
+
+## Results (holdout 2025-01 → 2026-10, 211 series, 20,323 origins; QLIKE, lower = better)
+| model | h = 1 | h = 5 | h = 10 |
+|---|---|---|---|
+| B0 RV20 | 0.562 | 0.351 | 0.306 |
+| B1 HAR | 0.317 | 0.190 | 0.170 |
+| B2 Chronos-2 zero-shot (bias-corrected) | 0.212 | 0.134 | 0.122 |
+| **M1 IndiaVol (full fine-tune, bias-corrected)** | **0.205** | **0.130** | **0.117** |
+
+- Publish rule (h = 5): pooled M1 − HAR = −0.060, day-bootstrap 95 % CI [−0.077, −0.044]; M1 beats HAR on **5 / 5**
+  indices (DM p ≤ 0.004 each). **Passed.**
+- **Honest caveat:** most of the gain over HAR comes from Chronos-2 itself. Fine-tuning adds a small extra gain on the
+  holdout (h = 5: −0.004, CI [−0.009, −0.0002], secondary / not pre-registered), and zero-shot was slightly better on
+  validation. Full table and caveats: [`hf/README.md`](hf/README.md) (the model card).
 
 ## Why volatility, not direction
 Short-horizon price direction failed every honest out-of-sample test we ran: rule searches, "smart money" setups,
