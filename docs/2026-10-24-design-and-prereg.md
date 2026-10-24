@@ -56,3 +56,16 @@ the questions; every choice below is my call, stated plainly.
 - **Trial ledger:** family `vol-forecast` in `~/trial-ledger`.
 - **Hugging Face:** needs the owner's login (`hf auth login`). The repo name, public/private and licence (Apache-2.0,
   as Chronos-2) are confirmed with the owner **before** any upload.
+
+## Addendum (2026-10-24, before any model run — fixes details the plan left open)
+- **Forecast origins:**
+  - indices: every trading day;
+  - stocks: every 5th trading day (compute budget; same days for every model);
+  - validation origins = 2024-07 → 2024-12, holdout origins = 2025-01 → last day with a full h = 10 window.
+- **One prediction per origin:** a 10-step path of daily log RV; σ̂_h uses the first h steps (h = 1, 5, 10). Chronos:
+  σ̂_h = √(252 × mean(exp(median log RV))) × exp(−bias), where bias = mean log(σ̂ / σ_real) on the **validation**
+  origins at that h (B2 and M1 separately).
+- **M1 candidates** (selected on validation h = 5 QLIKE, all logged as trials):
+  - LoRA lr 1e-5 × {1,000, 3,000} steps;
+  - full fine-tune lr 1e-6 × 1,000 steps;
+  - context 512, prediction_length 10. Training series = each series truncated at 2024-06-30.
