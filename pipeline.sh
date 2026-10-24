@@ -8,7 +8,23 @@ V=/home/chelvas/server_setup/upstox-trade-bot/.venv/bin/python
 D=/home/chelvas/india-vol-data
 export CHRONOS_GPU=0
 log() { echo "=== $(date '+%F %T') $*"; }
-while pgrep -f "src/fetch_[1]m.py" >/dev/null; do sleep 60; done
+# wait for the 1m fetch; if it died before finishing (e.g. its parent session exited), restart it — it resumes from
+# the month cache — so training never starts on a partial universe
+fetch_complete() {
+  local total done
+  # only the LAST run counts: a restarted fetch appends a new header and numbers from [1/N] again
+  total=$(grep -oE '^[0-9]+ F&O underlyings' "$D/fetch.log" | tail -1 | cut -d' ' -f1)
+  done=$(awk '/^[0-9]+ F&O underlyings/{n=0} /^\[[0-9]+\/[0-9]+\] /{n++} END{print n+0}' "$D/fetch.log")
+  [ -n "$total" ] && [ "$done" -ge "$total" ]
+}
+while ! fetch_complete; do
+  if ! pgrep -f "src/fetch_[1]m.py" >/dev/null; then
+    log "fetch not running and not complete — restarting it (resumes from cache)"
+    setsid nohup "$V" src/fetch_1m.py >> "$D/fetch.log" 2>&1 < /dev/null &
+    sleep 120
+  fi
+  sleep 60
+done
 log "fetch done: $(grep -c ' bars$' $D/fetch.log) ok, $(grep -c FAILED $D/fetch.log) failed"
 $V src/panel.py
 $V src/export.py
